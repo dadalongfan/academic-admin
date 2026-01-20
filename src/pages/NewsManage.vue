@@ -198,6 +198,13 @@ const editorConfig = {
       maxFileSize: 5 * 1024 * 1024, // 5MB
       maxNumberOfFiles: 10,
       allowedFileTypes: ['image/*'],
+      // 自定义上传成功处理
+      customInsert(res, insertFn) {
+        // 从后端返回的结果中获取图片URL
+        const url = res.data.url
+        // 使用insertFn插入图片
+        insertFn(url)
+      },
       onSuccess: (result, file) => {
         console.log('上传成功', result, file)
       },
