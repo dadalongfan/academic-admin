@@ -340,6 +340,7 @@ import { Plus, Upload } from '@element-plus/icons-vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
 import request from '../utils/api'
+import { toolbarConfig, editorConfig } from '../utils/editorConfig'
 
 const activeTab = ref('slideshow')
 
@@ -428,14 +429,6 @@ const leaderInfoRef = ref(null)
 // WangEditor 配置
 const introductionEditorRef = ref(null)
 const teamIntroductionEditorRef = ref(null)
-
-const toolbarConfig = {
-  excludeKeys: ['fullScreen', 'code', 'codeBlock']
-}
-
-const editorConfig = {
-  placeholder: '请输入内容...'
-}
 
 // 编辑器创建成功回调
 const handleIntroductionEditorCreated = (editor) => {

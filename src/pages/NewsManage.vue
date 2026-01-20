@@ -112,7 +112,7 @@
             <Toolbar
               style="border-bottom: 1px solid #ccc"
               :editor="editorRef"
-              :defaultConfig="editorConfig"
+              :defaultConfig="toolbarConfig"
             />
             <Editor
               style="height: 400px; overflow-y: auto"
@@ -152,6 +152,8 @@ import request from '../utils/api'
 // 导入WangEditor
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
+// 引入公共编辑器配置
+import { toolbarConfig, editorConfig } from '../utils/editorConfig'
 
 // 搜索表单
 const searchForm = reactive({
@@ -189,32 +191,6 @@ const form = reactive({
 // WangEditor 配置
 const editorRef = ref(null)
 const editorContent = ref('')
-const editorConfig = {
-  placeholder: '请输入新闻内容...',
-  MENU_CONF: {
-    uploadImage: {
-      server: `${request.defaults.baseURL}/upload/image`,
-      fieldName: 'file',
-      maxFileSize: 5 * 1024 * 1024, // 5MB
-      maxNumberOfFiles: 10,
-      allowedFileTypes: ['image/*'],
-      // 自定义上传成功处理
-      customInsert(res, insertFn) {
-        // 从后端返回的结果中获取图片URL
-        const url = res.data.url
-        // 使用insertFn插入图片
-        insertFn(url)
-      },
-      onSuccess: (result, file) => {
-        console.log('上传成功', result, file)
-      },
-      onFailed: (result, file) => {
-        console.error('上传失败', result, file)
-        ElMessage.error('图片上传失败：' + (result?.message || '未知错误'))
-      }
-    }
-  }
-}
 
 // 监听编辑器内容变化
 const handleEditorChange = (editor) => {
