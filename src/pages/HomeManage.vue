@@ -433,10 +433,14 @@ const teamIntroductionEditorRef = ref(null)
 // 编辑器创建成功回调
 const handleIntroductionEditorCreated = (editor) => {
   introductionEditorRef.value = editor
+  // 初始化图片列表
+  updateEditorImages(editor)
 }
 
 const handleTeamIntroductionEditorCreated = (editor) => {
   teamIntroductionEditorRef.value = editor
+  // 初始化图片列表
+  updateEditorImages(editor)
 }
 
 // 组件销毁前销毁编辑器实例
@@ -475,6 +479,10 @@ const saveLeaderInfo = async () => {
     if (!leaderInfoRef.value) return
     await leaderInfoRef.value.validate()
     
+    // 检查编辑器中的图片删除
+    checkImagesDeletion(introductionEditorRef.value)
+    checkImagesDeletion(teamIntroductionEditorRef.value)
+    
     const res = await request.put('/leader', leaderInfo)
     if (res.code === 200) {
       ElMessage.success('保存成功')
@@ -483,6 +491,76 @@ const saveLeaderInfo = async () => {
     console.error('保存失败:', error)
     ElMessage.error('保存失败')
   }
+}
+
+// 检查编辑器中的图片删除
+const checkImagesDeletion = (editor) => {
+  if (!editor) return
+  
+  const html = editor.getHtml()
+  // 从HTML中提取所有图片URL
+  const newImages = []
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const imgElements = doc.querySelectorAll('img')
+  imgElements.forEach(img => {
+    const src = img.getAttribute('src')
+    if (src && src.startsWith('/uploads/images/')) {
+      newImages.push(src)
+    }
+  })
+  
+  // 检测被删除的图片
+  const editorKey = editor === introductionEditorRef.value ? 'introduction' : 'teamIntroduction'
+  const oldImages = editorImagesMap[editorKey] || []
+  const deletedImages = oldImages.filter(img => !newImages.includes(img))
+  
+  // 如果有图片被删除，调用后端API删除本地文件
+  if (deletedImages.length > 0) {
+    deletedImages.forEach(imgUrl => {
+      // 调用后端API删除本地文件
+      request.delete(`/upload/file?url=${encodeURIComponent(imgUrl)}`)
+        .then(response => {
+          if (response.code === 200) {
+            console.log('图片删除成功:', imgUrl)
+          } else {
+            console.error('图片删除失败:', imgUrl, response.message)
+          }
+        })
+        .catch(error => {
+          console.error('删除图片时发生错误:', imgUrl, error)
+        })
+    })
+  }
+  
+  // 更新图片列表
+  editorImagesMap[editorKey] = newImages
+}
+
+// 初始化编辑器图片列表
+const editorImagesMap = {
+  introduction: [],
+  teamIntroduction: []
+}
+
+// 更新编辑器中的图片列表
+const updateEditorImages = (editor) => {
+  // 从编辑器内容中提取所有图片URL
+  const html = editor.getHtml()
+  const newImages = []
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const imgElements = doc.querySelectorAll('img')
+  imgElements.forEach(img => {
+    const src = img.getAttribute('src')
+    if (src && src.startsWith('/uploads/images/')) {
+      newImages.push(src)
+    }
+  })
+  // 更新到editorImagesMap
+  const editorKey = editor === introductionEditorRef.value ? 'introduction' : 'teamIntroduction'
+  editorImagesMap[editorKey] = newImages
+  console.log('初始化编辑器图片列表:', newImages)
 }
 
 // 头像上传成功处理

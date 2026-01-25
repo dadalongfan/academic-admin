@@ -115,10 +115,9 @@
               :defaultConfig="toolbarConfig"
             />
             <Editor
-              style="height: 400px; overflow-y: auto"
               v-model="editorContent"
               :defaultConfig="editorConfig"
-              @onCreated="editorRef = $event"
+              @onCreated="handleEditorCreated"
               @onChange="handleEditorChange"
             />
           </div>
@@ -153,7 +152,7 @@ import request from '../utils/api'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
 // 引入公共编辑器配置
-import { toolbarConfig, editorConfig } from '../utils/editorConfig'
+import { toolbarConfig, editorConfig, imageManager } from '../utils/editorConfig'
 
 // 搜索表单
 const searchForm = reactive({
@@ -191,12 +190,67 @@ const form = reactive({
 // WangEditor 配置
 const editorRef = ref(null)
 const editorContent = ref('')
+const editorImagesMap = ref({})
 
 // 监听编辑器内容变化
 const handleEditorChange = (editor) => {
   editorContent.value = editor.getHtml()
   // 将内容同步到form中
   form.content = editorContent.value
+}
+
+// 检查编辑器中的图片删除
+const checkImagesDeletion = () => {
+  if (!editorRef.value) return
+  
+  const html = editorRef.value.getHtml()
+  // 从HTML中提取所有图片URL
+  const newImages = []
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const imgElements = doc.querySelectorAll('img')
+  imgElements.forEach(img => {
+    const src = img.getAttribute('src')
+    if (src && src.startsWith('/uploads/images/')) {
+      newImages.push(src)
+    }
+  })
+  
+  // 检测被删除的图片
+  const deletedImages = Object.values(editorImagesMap.value).filter(img => !newImages.includes(img))
+  
+  // 如果有图片被删除，调用后端API删除本地文件
+  if (deletedImages.length > 0) {
+    deletedImages.forEach(imgUrl => {
+      // 调用后端API删除本地文件
+      request.delete(`/upload/file?url=${encodeURIComponent(imgUrl)}`)
+        .then(response => {
+          if (response.code === 200) {
+            console.log('图片删除成功:', imgUrl)
+            // 从图片映射中移除已删除的图片
+            for (const key in editorImagesMap.value) {
+              if (editorImagesMap.value[key] === imgUrl) {
+                delete editorImagesMap.value[key]
+                break
+              }
+            }
+          } else {
+            console.error('图片删除失败:', imgUrl, response.message)
+          }
+        })
+        .catch(error => {
+          console.error('删除图片时发生错误:', imgUrl, error)
+        })
+    })
+  }
+  
+  // 更新当前图片列表
+  // 为每个图片生成一个唯一key，用于跟踪图片变化
+  const newImagesMap = {}
+  newImages.forEach((img, index) => {
+    newImagesMap[`img_${index}_${Date.now()}`] = img
+  })
+  editorImagesMap.value = newImagesMap
 }
 
 // 监听form.content变化，更新编辑器内容
@@ -272,12 +326,22 @@ const openEditDialog = (row) => {
   })
 }
 
+// 编辑器创建成功回调
+const handleEditorCreated = (editor) => {
+  editorRef.value = editor
+  // 初始化图片列表
+  checkImagesDeletion()
+}
+
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
 
   try {
     await formRef.value.validate()
+    
+    // 检查编辑器中的图片删除
+    imageManager.checkImagesDeletion(editorRef.value)
 
     if (form.id) {
       await request.put(`/news/${form.id}`, form)
