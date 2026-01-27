@@ -186,7 +186,7 @@ import request from '../utils/api'
 
 // 文件上传地址
 const uploadAction = computed(() => {
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082/api'}/upload/avatar`
+  return `${import.meta.env.VITE_API_BASE_URL || 'http://39.100.78.167:8801/api'}/upload/avatar`
 })
 
 // 搜索表单

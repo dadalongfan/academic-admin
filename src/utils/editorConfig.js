@@ -72,7 +72,7 @@ export const imageManager = {
     
     // 更新当前图片列表
     imageManager.currentImages = newImages
-    console.log('�编辑器图片列表:', newImages)
+    console.log('初始化编辑器图片列表:', newImages)
   },
   
   // 重置图片列表
@@ -131,42 +131,9 @@ export const editorConfig = {
     return true;
   },
   // 监听内容变化事件，用于检测图片删除
-  onchange: (newHtml) => {
-    // 从新HTML中提取所有图片URL
-    const newImages = []
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(newHtml, 'text/html')
-    const imgElements = doc.querySelectorAll('img')
-    imgElements.forEach(img => {
-      const src = img.getAttribute('src')
-      if (src && src.startsWith('/uploads/images/')) {
-        newImages.push(src)
-      }
-    })
-    
-    // 检测被删除的图片
-    const deletedImages = imageManager.currentImages.filter(img => !newImages.includes(img))
-    
-    // 如果有图片被删除，调用后端API删除本地文件
-    if (deletedImages.length > 0) {
-      deletedImages.forEach(imgUrl => {
-        // 调用后端API删除本地文件
-        request.delete(`/upload/file?url=${encodeURIComponent(imgUrl)}`)
-          .then(response => {
-            if (response.code === 200) {
-              console.log('图片删除成功:', imgUrl)
-            } else {
-              console.error('图片删除失败:', imgUrl, response.message)
-            }
-          })
-          .catch(error => {
-            console.error('删除图片时发生错误:', imgUrl, error)
-          })
-      })
-    }
-    
-    // 更新当前图片列表
-    imageManager.currentImages = newImages
+  onchange: (editor) => {
+    // 使用imageManager的checkImagesDeletion函数检查图片删除
+    imageManager.checkImagesDeletion(editor)
   },
   MENU_CONF: {
     uploadImage: {

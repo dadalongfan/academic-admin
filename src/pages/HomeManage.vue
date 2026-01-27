@@ -361,7 +361,7 @@ const slideshowForm = reactive({
 })
 
 // 图片上传相关配置
-const uploadUrl = ref(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082/api'}/upload/image`)
+const uploadUrl = ref(`${import.meta.env.VITE_API_BASE_URL || 'http://39.100.78.167:8801/api'}/upload/image`)
 
 // 图片上传成功处理
 const handleImageUploadSuccess = (response) => {
@@ -396,7 +396,7 @@ const getFullImageUrl = (url) => {
     return url
   }
   // 否则拼接完整URL
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082/api'}${url}`
+  return `${import.meta.env.VITE_API_BASE_URL || 'http://39.100.78.167:8801/api'}${url}`
 }
 
 const slideshowRules = {
