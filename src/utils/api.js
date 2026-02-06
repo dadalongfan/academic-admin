@@ -2,11 +2,36 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { getToken, removeToken } from './auth'
 
+// 使用 Vite 注入的全局常量
+if (typeof __API_BASE_URL__ === 'undefined') {
+  throw new Error('__API_BASE_URL__ 未定义，请检查 vite.config.js 配置')
+}
+
+const API_BASE_URL = __API_BASE_URL__
+
+// 获取完整的图片URL用于预览
+const getFullImageUrl = (url) => {
+  if (!url) return ''
+  // 如果已经是完整URL则直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  // 生产环境使用完整的后端服务URL
+  if (import.meta.env.PROD) {
+    return `${API_BASE_URL}${url}`
+  }
+  // 开发环境使用相对路径，通过vite代理访问
+  return url
+}
+
 // 创建axios实例
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 30000
 })
+
+// 导出配置和工具函数
+export { API_BASE_URL, getFullImageUrl }
 
 // 请求拦截器
 request.interceptors.request.use(

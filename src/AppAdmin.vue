@@ -1,10 +1,10 @@
 <template>
   <div class="admin-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
+    <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar">
       <div class="logo">
-        <h2 v-if="!isCollapse">Academic管理</h2>
-        <h2 v-else>A1</h2>
+        <h2 v-if="!isCollapse">介质过程强化团队</h2>
+        <h2 v-else>团</h2>
       </div>
 
       <el-menu
@@ -15,37 +15,37 @@
       >
         <el-menu-item index="/home">
           <el-icon><HomeFilled /></el-icon>
-          <span>首页管理</span>
+          <span>首页</span>
         </el-menu-item>
 
         <el-menu-item index="/news">
           <el-icon><Document /></el-icon>
-          <span>新闻管理</span>
+          <span>新闻动态</span>
         </el-menu-item>
 
         <el-menu-item index="/members">
           <el-icon><User /></el-icon>
-          <span>成员管理</span>
+          <span>团队成员</span>
         </el-menu-item>
 
         <el-menu-item index="/publications">
           <el-icon><Reading /></el-icon>
-          <span>科研管理</span>
+          <span>研究</span>
         </el-menu-item>
 
         <el-menu-item index="/projects">
           <el-icon><Briefcase /></el-icon>
-          <span>项目管理</span>
+          <span>应用开发</span>
         </el-menu-item>
 
         <el-menu-item index="/gallery">
           <el-icon><Picture /></el-icon>
-          <span>相册管理</span>
+          <span>文化</span>
         </el-menu-item>
 
         <el-menu-item index="/recruitment">
           <el-icon><Tickets /></el-icon>
-          <span>招聘管理</span>
+          <span>招贤纳士</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -129,7 +129,7 @@ const handleCommand = async (command) => {
 
       removeToken()
       ElMessage.success('已退出登录')
-      window.location.href = '/'
+      window.location.href = './index.html'
     } catch {
       // 用户取消
     }
@@ -152,14 +152,51 @@ const handleCommand = async (command) => {
 }
 
 .logo {
-  height: 60px;
-  line-height: 60px;
+  height: 65px;
+  line-height: 65px;
   text-align: center;
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   background-color: #0d2a47;
-  border-bottom: 2px solid #3a6ea5;
+  border-bottom: 3px solid #409eff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.logo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.logo:hover::before {
+  left: 100%;
+}
+
+.logo h2 {
+  margin: 0;
+  padding: 0;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.logo:hover h2 {
+  transform: translateY(-2px);
 }
 
 .menu {
@@ -199,7 +236,7 @@ const handleCommand = async (command) => {
 }
 
 .menu:not(.el-menu--collapse) {
-  width: 200px;
+  width: 220px;
 }
 
 .main-container {

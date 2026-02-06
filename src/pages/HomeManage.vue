@@ -54,22 +54,16 @@
             <el-form :model="slideshowForm" :rules="slideshowRules" ref="slideshowFormRef" label-width="100px">
               <el-form-item label="幻灯片图片" prop="imageUrl">
                 <el-upload
-                  class="avatar-uploader"
-                  :action="uploadUrl"
-                  :show-file-list="false"
-                  :on-success="handleImageUploadSuccess"
-                  :before-upload="beforeImageUpload"
-                >
-                  <img v-if="slideshowForm.imageUrl" :src="getFullImageUrl(slideshowForm.imageUrl)" class="uploaded-image" />
-                  <el-icon v-else class="upload-icon"><Plus /></el-icon>
-                </el-upload>
-                <el-input
-                  v-model="slideshowForm.imageUrl"
-                  placeholder="图片URL（上传后自动填充）"
-                  class="mt-2"
-                  readonly
-                />
-              </el-form-item>
+                class="avatar-uploader"
+                :action="uploadUrl"
+                :show-file-list="false"
+                :on-success="handleImageUploadSuccess"
+                :before-upload="beforeImageUpload"
+              >
+                <img v-if="slideshowForm.imageUrl" :src="getFullImageUrl(slideshowForm.imageUrl)" class="uploaded-image" />
+                <el-icon v-else class="upload-icon"><Plus /></el-icon>
+              </el-upload>
+            </el-form-item>
 
               <el-form-item label="标题">
                 <el-input v-model="slideshowForm.title" placeholder="请输入标题" />
@@ -143,7 +137,6 @@
                     上传头像
                   </el-button>
                 </el-upload>
-                <el-input v-model="leaderInfo.avatarUrl" placeholder="或直接输入头像URL" style="margin-top: 10px;" />
               </el-form-item>
               <el-form-item label="个人简介">
                 <div class="editor-container">
@@ -157,6 +150,7 @@
                     :default-config="editorConfig"
                     :mode="'default'"
                     @onCreated="handleIntroductionEditorCreated"
+                    @onChange="(editor) => imageManager.checkImagesDeletion(editor)"
                   />
                 </div>
               </el-form-item>
@@ -172,6 +166,7 @@
                     :default-config="editorConfig"
                     :mode="'default'"
                     @onCreated="handleTeamIntroductionEditorCreated"
+                    @onChange="(editor) => imageManager.checkImagesDeletion(editor)"
                   />
                 </div>
               </el-form-item>
@@ -339,8 +334,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload } from '@element-plus/icons-vue'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
-import request from '../utils/api'
-import { toolbarConfig, editorConfig } from '../utils/editorConfig'
+import request, { getFullImageUrl, API_BASE_URL } from '../utils/api'
+import { toolbarConfig, editorConfig, imageManager } from '../utils/editorConfig'
 
 const activeTab = ref('slideshow')
 
@@ -361,7 +356,7 @@ const slideshowForm = reactive({
 })
 
 // 图片上传相关配置
-const uploadUrl = ref(`${import.meta.env.VITE_API_BASE_URL || 'http://39.100.78.167:8801/api'}/upload/image`)
+const uploadUrl = ref(import.meta.env.PROD ? `${API_BASE_URL}/upload/image` : '/api/upload/image')
 
 // 图片上传成功处理
 const handleImageUploadSuccess = (response) => {
@@ -388,16 +383,7 @@ const beforeImageUpload = (file) => {
   return true
 }
 
-// 获取完整的图片URL用于预览
-const getFullImageUrl = (url) => {
-  if (!url) return ''
-  // 如果已经是完整URL则直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-  // 否则拼接完整URL
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://39.100.78.167:8801/api'}${url}`
-}
+
 
 const slideshowRules = {
   imageUrl: [{ required: true, message: '请输入图片URL', trigger: 'blur' }]
@@ -434,13 +420,13 @@ const teamIntroductionEditorRef = ref(null)
 const handleIntroductionEditorCreated = (editor) => {
   introductionEditorRef.value = editor
   // 初始化图片列表
-  updateEditorImages(editor)
+  imageManager.initEditorImages(editor)
 }
 
 const handleTeamIntroductionEditorCreated = (editor) => {
   teamIntroductionEditorRef.value = editor
   // 初始化图片列表
-  updateEditorImages(editor)
+  imageManager.initEditorImages(editor)
 }
 
 // 组件销毁前销毁编辑器实例
@@ -480,8 +466,8 @@ const saveLeaderInfo = async () => {
     await leaderInfoRef.value.validate()
     
     // 检查编辑器中的图片删除
-    checkImagesDeletion(introductionEditorRef.value)
-    checkImagesDeletion(teamIntroductionEditorRef.value)
+    imageManager.checkImagesDeletion(introductionEditorRef.value)
+    imageManager.checkImagesDeletion(teamIntroductionEditorRef.value)
     
     const res = await request.put('/leader', leaderInfo)
     if (res.code === 200) {
@@ -493,75 +479,7 @@ const saveLeaderInfo = async () => {
   }
 }
 
-// 检查编辑器中的图片删除
-const checkImagesDeletion = (editor) => {
-  if (!editor) return
-  
-  const html = editor.getHtml()
-  // 从HTML中提取所有图片URL
-  const newImages = []
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const imgElements = doc.querySelectorAll('img')
-  imgElements.forEach(img => {
-    const src = img.getAttribute('src')
-    if (src && src.startsWith('/uploads/images/')) {
-      newImages.push(src)
-    }
-  })
-  
-  // 检测被删除的图片
-  const editorKey = editor === introductionEditorRef.value ? 'introduction' : 'teamIntroduction'
-  const oldImages = editorImagesMap[editorKey] || []
-  const deletedImages = oldImages.filter(img => !newImages.includes(img))
-  
-  // 如果有图片被删除，调用后端API删除本地文件
-  if (deletedImages.length > 0) {
-    deletedImages.forEach(imgUrl => {
-      // 调用后端API删除本地文件
-      request.delete(`/upload/file?url=${encodeURIComponent(imgUrl)}`)
-        .then(response => {
-          if (response.code === 200) {
-            console.log('图片删除成功:', imgUrl)
-          } else {
-            console.error('图片删除失败:', imgUrl, response.message)
-          }
-        })
-        .catch(error => {
-          console.error('删除图片时发生错误:', imgUrl, error)
-        })
-    })
-  }
-  
-  // 更新图片列表
-  editorImagesMap[editorKey] = newImages
-}
 
-// 初始化编辑器图片列表
-const editorImagesMap = {
-  introduction: [],
-  teamIntroduction: []
-}
-
-// 更新编辑器中的图片列表
-const updateEditorImages = (editor) => {
-  // 从编辑器内容中提取所有图片URL
-  const html = editor.getHtml()
-  const newImages = []
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const imgElements = doc.querySelectorAll('img')
-  imgElements.forEach(img => {
-    const src = img.getAttribute('src')
-    if (src && src.startsWith('/uploads/images/')) {
-      newImages.push(src)
-    }
-  })
-  // 更新到editorImagesMap
-  const editorKey = editor === introductionEditorRef.value ? 'introduction' : 'teamIntroduction'
-  editorImagesMap[editorKey] = newImages
-  console.log('初始化编辑器图片列表:', newImages)
-}
 
 // 头像上传成功处理
 const handleAvatarUploadSuccess = (response) => {
@@ -571,6 +489,39 @@ const handleAvatarUploadSuccess = (response) => {
   } else {
     ElMessage.error('头像上传失败：' + (response.message || '未知错误'))
   }
+}
+
+// 头像上传前验证
+const beforeAvatarUpload = async (file) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过5MB')
+    return false
+  }
+  
+  // 删除旧头像
+  if (leaderInfo.avatarUrl) {
+    try {
+      // 调用删除 API
+      const response = await request.delete(`/upload/file?url=${encodeURIComponent(leaderInfo.avatarUrl)}`)
+      if (response.code === 200) {
+        console.log('旧头像删除成功:', leaderInfo.avatarUrl)
+      } else {
+        console.error('旧头像删除失败:', response.message)
+        // 删除失败不阻止上传
+      }
+    } catch (error) {
+      console.error('删除旧头像时发生错误:', error)
+      // 错误不阻止上传
+    }
+  }
+  
+  return true
 }
 
 // 教育经历

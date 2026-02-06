@@ -87,7 +87,7 @@
 
           <div v-for="image in images" :key="image.id" class="image-item">
             <div class="image-preview">
-              <img :src="image.imageUrl" :alt="image.description" @error="handleImageError" />
+              <img :src="getFullImageUrl(image.imageUrl)" :alt="image.description" @error="handleImageError" />
             </div>
             <div class="image-info">
               <h4 class="image-title">{{ image.description || '无标题' }}</h4>
@@ -110,31 +110,29 @@
           <el-form :model="imageForm" :rules="imageRules" ref="imageFormRef" label-width="100px">
             <el-form-item label="图片" prop="imageUrl">
               <el-upload
+                ref="uploadRef"
                 class="image-uploader"
-                :action="uploadUrl"
+                :auto-upload="false"
+                :on-change="handleFileChange"
                 :show-file-list="false"
-                :on-success="handleImageUploadSuccess"
-                :before-upload="beforeImageUpload"
               >
                 <el-button size="small" type="primary">
                   <el-icon><Upload /></el-icon>
                   上传图片
                 </el-button>
               </el-upload>
-              <div class="image-preview-container" v-if="imageForm.imageUrl">
-                <img :src="imageForm.imageUrl" :alt="imageForm.description" style="max-width: 100%; max-height: 300px; margin-top: 10px;" />
+              <div class="image-preview-container" v-if="imagePreviewUrl || imageForm.imageUrl">
+                <img :src="imagePreviewUrl || getFullImageUrl(imageForm.imageUrl)" :alt="imageForm.description" style="max-width: 100%; max-height: 300px; margin-top: 10px;" />
                 <el-button
                   size="small"
                   type="danger"
-                  plain
                   @click.stop="removeImage"
-                  style="margin-top: 10px"
+                  style="margin-top: 10px; background-color: #f56c6c; border-color: #f56c6c"
                 >
                   <el-icon><Delete /></el-icon>
                   删除图片
                 </el-button>
               </div>
-              <el-input v-model="imageForm.imageUrl" placeholder="或直接输入图片URL" style="margin-top: 10px;" />
             </el-form-item>
             <el-form-item label="分类" prop="categoryId">
               <el-select v-model="imageForm.categoryId" placeholder="请选择分类">
@@ -182,7 +180,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Delete } from '@element-plus/icons-vue'
-import request from '../utils/api'
+import request, { getFullImageUrl, API_BASE_URL } from '../utils/api'
 
 const activeTab = ref('categories')
 const loading = ref(false)
@@ -193,6 +191,11 @@ const categoryDialogTitle = ref('')
 const imageDialogTitle = ref('')
 const categoryFormRef = ref(null)
 const imageFormRef = ref(null)
+const uploadRef = ref(null)
+
+// 本地文件处理
+const selectedFile = ref(null)
+const imagePreviewUrl = ref('')
 
 // 分类相关
 const categories = ref([])
@@ -210,7 +213,7 @@ const categoryRules = {
 }
 
 // 图片上传配置
-const uploadUrl = ref(`${request.defaults.baseURL}/upload/image`)
+const uploadUrl = ref(import.meta.env.PROD ? `${API_BASE_URL}/upload/image` : '/api/upload/image')
 
 // 图片相关
 const images = ref([])
@@ -239,23 +242,50 @@ const handleImageUploadSuccess = (response) => {
   }
 }
 
-// 图片上传前验证
-const beforeImageUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
+// 文件选择处理
+const handleFileChange = (file) => {
+  const isImage = file.raw.type.startsWith('image/')
   if (!isImage) {
     ElMessage.error('只能上传图片格式文件')
     return false
   }
-  const isLt10M = file.size / 1024 / 1024 < 10
+  const isLt10M = file.raw.size / 1024 / 1024 < 10
   if (!isLt10M) {
     ElMessage.error('图片大小不能超过10MB')
     return false
   }
-  return true
+  
+  // 保存选中的文件
+  selectedFile.value = file.raw
+  
+  // 生成本地预览
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreviewUrl.value = e.target.result
+  }
+  reader.readAsDataURL(file.raw)
+  
+  return false
 }
 
 // 删除图片
-const removeImage = () => {
+const removeImage = async () => {
+  if (imageForm.imageUrl && !selectedFile.value) {
+    try {
+      // 调用删除 API 删除服务器上的图片
+      const response = await request.delete(`/upload/file?url=${encodeURIComponent(imageForm.imageUrl)}`)
+      if (response.code === 200) {
+        console.log('图片删除成功:', imageForm.imageUrl)
+      } else {
+        console.error('图片删除失败:', response.message)
+      }
+    } catch (error) {
+      console.error('删除图片时发生错误:', error)
+    }
+  }
+  // 清空本地状态
+  selectedFile.value = null
+  imagePreviewUrl.value = ''
   imageForm.imageUrl = ''
   ElMessage.success('图片已删除')
 }
@@ -388,11 +418,48 @@ const openImageDialog = (row) => {
 
 // 提交图片表单
 const handleSubmitImage = async () => {
-  if (!imageFormRef.value) return
+  console.log('点击了确定按钮')
+  
+  // 先检查必填字段
+  if (!imageForm.categoryId) {
+    ElMessage.error('请选择分类')
+    return
+  }
+  
+  // 检查是否有图片
+  if (!selectedFile.value && !imageForm.imageUrl) {
+    ElMessage.error('请上传图片')
+    return
+  }
 
   try {
-    await imageFormRef.value.validate()
+    // 如果有新选择的文件，先上传图片
+    if (selectedFile.value) {
+      console.log('开始上传图片')
+      const formData = new FormData()
+      formData.append('file', selectedFile.value)
+      
+      // 上传图片
+      const uploadResponse = await request.post('/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      console.log('上传响应:', uploadResponse)
+      
+      if (uploadResponse.code === 200) {
+        // 上传成功，获取图片URL
+        imageForm.imageUrl = uploadResponse.data.url
+        console.log('图片URL:', imageForm.imageUrl)
+      } else {
+        ElMessage.error('图片上传失败：' + (uploadResponse.message || '未知错误'))
+        return
+      }
+    }
 
+    // 提交数据
+    console.log('开始提交数据:', imageForm)
     if (imageForm.id) {
       await request.put(`/gallery-images/${imageForm.id}`, imageForm)
     } else {
@@ -403,7 +470,8 @@ const handleSubmitImage = async () => {
     imageDialogVisible.value = false
     loadImages()
   } catch (error) {
-    console.error(error)
+    console.error('提交失败:', error)
+    ElMessage.error('操作失败：' + (error.message || '未知错误'))
   }
 }
 
@@ -440,6 +508,9 @@ const resetImageForm = () => {
     uploadDate: '',
     status: 1
   })
+  // 清空本地文件和预览
+  selectedFile.value = null
+  imagePreviewUrl.value = ''
 }
 
 // 图片加载失败处理

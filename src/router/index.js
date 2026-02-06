@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { getToken } from '../utils/auth'
 
 const routes = [
@@ -35,13 +35,13 @@ const routes = [
     path: '/publications',
     name: 'PublicationsManage',
     component: () => import('../pages/PublicationsManage.vue'),
-    meta: { title: '科研管理', requiresAuth: true }
+    meta: { title: '研究管理', requiresAuth: true }
   },
   {
     path: '/projects',
     name: 'ProjectsManage',
     component: () => import('../pages/ProjectsManage.vue'),
-    meta: { title: '项目管理', requiresAuth: true }
+    meta: { title: '应用开发管理', requiresAuth: true }
   },
   {
     path: '/gallery',
@@ -58,7 +58,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory('/admin.html'),
+  history: createWebHashHistory(),
   routes
 })
 
@@ -74,7 +74,7 @@ router.beforeEach((to, from, next) => {
       next()
     } else {
       // 未登录，跳转到登录页
-      window.location.href = '/'
+      window.location.href = './index.html'
     }
   } else {
     // 不需要认证，直接放行

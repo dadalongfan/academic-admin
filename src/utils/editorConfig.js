@@ -8,8 +8,8 @@ export const toolbarConfig = {
 
 // 图片管理工具
 export const imageManager = {
-  // 当前编辑器中的图片URL列表
-  currentImages: [],
+  // 为每个编辑器实例维护独立的图片列表
+  editorImagesMap: new WeakMap(),
   
   // 检查编辑器中的图片删除
   checkImagesDeletion: (editor) => {
@@ -22,14 +22,20 @@ export const imageManager = {
     const doc = parser.parseFromString(html, 'text/html')
     const imgElements = doc.querySelectorAll('img')
     imgElements.forEach(img => {
-      const src = img.getAttribute('src')
+      let src = img.getAttribute('src')
+      // 如果是完整URL，提取相对路径
+      if (src && src.startsWith(request.defaults.baseURL)) {
+        src = src.replace(request.defaults.baseURL, '')
+      }
       if (src && src.startsWith('/uploads/images/')) {
         newImages.push(src)
       }
     })
     
+    // 获取该编辑器之前的图片列表
+    const oldImages = imageManager.editorImagesMap.get(editor) || []
     // 检测被删除的图片
-    const deletedImages = imageManager.currentImages.filter(img => !newImages.includes(img))
+    const deletedImages = oldImages.filter(img => !newImages.includes(img))
     
     // 如果有图片被删除，调用后端API删除本地文件
     if (deletedImages.length > 0) {
@@ -49,8 +55,8 @@ export const imageManager = {
       })
     }
     
-    // 更新当前图片列表
-    imageManager.currentImages = newImages
+    // 更新该编辑器的图片列表
+    imageManager.editorImagesMap.set(editor, newImages)
   },
   
   // 初始化编辑器中的图片列表
@@ -64,21 +70,27 @@ export const imageManager = {
     const doc = parser.parseFromString(html, 'text/html')
     const imgElements = doc.querySelectorAll('img')
     imgElements.forEach(img => {
-      const src = img.getAttribute('src')
+      let src = img.getAttribute('src')
+      // 如果是完整URL，提取相对路径
+      if (src && src.startsWith(request.defaults.baseURL)) {
+        src = src.replace(request.defaults.baseURL, '')
+      }
       if (src && src.startsWith('/uploads/images/')) {
         newImages.push(src)
       }
     })
     
-    // 更新当前图片列表
-    imageManager.currentImages = newImages
+    // 存储该编辑器的图片列表
+    imageManager.editorImagesMap.set(editor, newImages)
     console.log('初始化编辑器图片列表:', newImages)
   },
   
-  // 重置图片列表
-  resetImages: () => {
-    imageManager.currentImages = []
-    console.log('重置图片列表')
+  // 重置指定编辑器的图片列表
+  resetImages: (editor) => {
+    if (editor) {
+      imageManager.editorImagesMap.delete(editor)
+      console.log('重置编辑器图片列表')
+    }
   }
 }
 
@@ -145,13 +157,22 @@ export const editorConfig = {
       // 自定义上传成功处理
       customInsert: function(res, insertFn) {
         // 从后端返回的结果中获取图片URL
-        const url = res.data.url
+        let url = res.data.url
+        // 检查是否为相对路径，如果是则转换为完整URL
+        if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+          url = `${request.defaults.baseURL}${url}`
+        }
         // 使用insertFn插入图片
         insertFn(url)
         // 添加到当前图片列表
-        if (url && url.startsWith('/uploads/images/')) {
-          if (!imageManager.currentImages.includes(url)) {
-            imageManager.currentImages.push(url)
+        if (url) {
+          // 从完整URL中提取相对路径用于管理
+          let relativeUrl = url
+          if (url.startsWith(request.defaults.baseURL)) {
+            relativeUrl = url.replace(request.defaults.baseURL, '')
+          }
+          if (relativeUrl.startsWith('/uploads/images/') && !imageManager.currentImages.includes(relativeUrl)) {
+            imageManager.currentImages.push(relativeUrl)
           }
         }
       },

@@ -7,40 +7,40 @@
       </div>
 
       <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-        @submit.prevent="handleLogin"
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="loginRules"
+          class="login-form"
+          @submit.prevent="handleLogin"
       >
         <el-form-item prop="username">
           <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
-            size="large"
-            :prefix-icon="User"
+              v-model="loginForm.username"
+              placeholder="请输入用户名"
+              size="large"
+              :prefix-icon="User"
           />
         </el-form-item>
 
         <el-form-item prop="password">
           <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
-            @keyup.enter="handleLogin"
+              v-model="loginForm.password"
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+              :prefix-icon="Lock"
+              show-password
+              @keyup.enter="handleLogin"
           />
         </el-form-item>
 
         <el-form-item>
           <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            class="login-button"
-            @click="handleLogin"
+              type="primary"
+              size="large"
+              :loading="loading"
+              class="login-button"
+              @click="handleLogin"
           >
             {{ loading ? '登录中...' : '登录' }}
           </el-button>
@@ -66,7 +66,8 @@ const loading = ref(false)
 onMounted(() => {
   if (getToken()) {
     // 已登录，直接跳转到管理后台
-    window.location.href = '/admin.html'
+    // hash 模式会自动路由到 /home
+    window.location.href = './admin.html'
   }
 })
 
@@ -107,7 +108,7 @@ const handleLogin = async () => {
 
     // 跳转到管理后台
     setTimeout(() => {
-      window.location.href = '/admin.html'
+      window.location.href = './admin.html'
     }, 500)
 
   } catch (error) {
@@ -122,19 +123,29 @@ const handleLogin = async () => {
 .login-container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #1a3a5c 0%, #3a6ea5 100%);
-  font-family: 'Times New Roman', serif;
+  align-items: flex-start;
+  padding-top: 10vh;
+  justify-content: flex-end;
+  padding: 10vh 120px 0 120px;
+  background: url('/logo.jpg') no-repeat center center;
+  background-size: cover;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
 }
 
 .login-card {
-  width: 420px;
-  padding: 48px 40px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-  border-top: 4px solid #5089c6;
+  width: 400px;
+  padding: 50px 40px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.3);
+  border-top: 4px solid #409eff;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.login-card:hover {
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
 }
 
 .login-header {
@@ -143,17 +154,18 @@ const handleLogin = async () => {
 }
 
 .login-header h1 {
-  font-size: 28px;
+  font-size: 26px;
   color: #1a3a5c;
   margin-bottom: 12px;
   font-weight: bold;
-  letter-spacing: -0.5px;
+  letter-spacing: 1px;
 }
 
 .login-header p {
-  font-size: 15px;
+  font-size: 14px;
   color: #666;
   line-height: 1.6;
+  opacity: 0.9;
 }
 
 .login-form {
@@ -162,42 +174,46 @@ const handleLogin = async () => {
 
 /* 输入框样式 */
 :deep(.el-input__wrapper) {
-  border-radius: 4px;
-  border-color: #e8f4fc;
+  border-radius: 8px;
+  border-color: rgba(224, 231, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.9);
   transition: all 0.3s ease;
 }
 
 :deep(.el-input__wrapper:hover),
 :deep(.el-input__wrapper.is-focus) {
-  border-color: #5089c6;
-  box-shadow: 0 0 0 2px rgba(80, 137, 198, 0.1);
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.95);
 }
 
 :deep(.el-input__prefix-inner .el-icon) {
-  color: #5089c6;
+  color: #409eff;
+  font-size: 18px;
 }
 
 .login-button {
   width: 100%;
-  background-color: #3a6ea5;
-  border-color: #3a6ea5;
-  height: 42px;
+  background-color: #409eff;
+  border-color: #409eff;
+  height: 44px;
   font-size: 16px;
   font-weight: 500;
+  border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 :deep(.login-button:hover),
 :deep(.login-button:focus) {
-  background-color: #5089c6;
-  border-color: #5089c6;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(80, 137, 198, 0.3);
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
 }
 
 /* 加载状态样式 */
 :deep(.el-button--loading) {
-  background-color: #5089c6;
-  border-color: #5089c6;
+  background-color: #66b1ff;
+  border-color: #66b1ff;
 }
 </style>
