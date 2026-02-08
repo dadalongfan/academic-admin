@@ -44,10 +44,22 @@ const routes = [
     meta: { title: '应用开发管理', requiresAuth: true }
   },
   {
-    path: '/gallery',
-    name: 'GalleryManage',
-    component: () => import('../pages/GalleryManage.vue'),
-    meta: { title: '相册管理', requiresAuth: true }
+    path: '/culture',
+    name: 'CultureManage',
+    component: () => import('../pages/CultureManage.vue'),
+    meta: { title: '文化管理', requiresAuth: true }
+  },
+  {
+    path: '/research-journeys',
+    name: 'ResearchJourneyManage',
+    component: () => import('../pages/ResearchJourneyManage.vue'),
+    meta: { title: '研究征途管理', requiresAuth: true }
+  },
+  {
+    path: '/daily-moments',
+    name: 'DailyMomentManage',
+    component: () => import('../pages/DailyMomentManage.vue'),
+    meta: { title: '研途趣事管理', requiresAuth: true }
   },
   {
     path: '/recruitment',

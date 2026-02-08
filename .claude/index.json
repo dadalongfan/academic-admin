@@ -1,0 +1,180 @@
+{
+  "timestamp": "2025-01-08T17:12:45.000Z",
+  "project": {
+    "name": "academic-admin",
+    "description": "学术主页管理系统 - 管理后台前端",
+    "version": "1.0.0",
+    "techStack": {
+      "framework": "Vue 3.4.0",
+      "ui": "Element Plus 2.5.0",
+      "editor": "WangEditor 5.1.23",
+      "router": "Vue Router 4.2.5",
+      "http": "Axios 1.6.2",
+      "build": "Vite 5.0.0"
+    }
+  },
+  "modules": [
+    {
+      "path": "src/pages/HomeManage.vue",
+      "name": "首页管理模块",
+      "description": "管理首页幻灯片、负责人信息、教育/工作经历",
+      "entry": "/home",
+      "techStack": ["Vue 3", "WangEditor"],
+      "hasTests": false,
+      "documentation": "src/pages/CLAUDE_HomeManage.md"
+    },
+    {
+      "path": "src/pages/NewsManage.vue",
+      "name": "新闻管理模块",
+      "description": "管理新闻动态的发布、编辑、删除和分类",
+      "entry": "/news",
+      "techStack": ["Vue 3", "WangEditor"],
+      "hasTests": false,
+      "documentation": null
+    },
+    {
+      "path": "src/pages/MembersManage.vue",
+      "name": "成员管理模块",
+      "description": "管理团队成员信息和角色",
+      "entry": "/members",
+      "techStack": ["Vue 3", "Element Plus"],
+      "hasTests": false,
+      "documentation": "src/pages/CLAUDE_MembersManage.md"
+    },
+    {
+      "path": "src/pages/PublicationsManage.vue",
+      "name": "研究管理模块",
+      "description": "管理研究成果（论文、项目、专利等）",
+      "entry": "/publications",
+      "techStack": ["Vue 3", "WangEditor"],
+      "hasTests": false,
+      "documentation": null
+    },
+    {
+      "path": "src/pages/ProjectsManage.vue",
+      "name": "应用开发管理模块",
+      "description": "管理应用开发项目",
+      "entry": "/projects",
+      "techStack": ["Vue 3"],
+      "hasTests": false,
+      "documentation": null
+    },
+    {
+      "path": "src/pages/GalleryManage.vue",
+      "name": "相册管理模块",
+      "description": "管理相册分类和图片",
+      "entry": "/gallery",
+      "techStack": ["Vue 3"],
+      "hasTests": false,
+      "documentation": null
+    },
+    {
+      "path": "src/pages/RecruitmentManage.vue",
+      "name": "招聘管理模块",
+      "description": "管理招聘信息",
+      "entry": "/recruitment",
+      "techStack": ["Vue 3"],
+      "hasTests": false,
+      "documentation": null
+    },
+    {
+      "path": "src/pages/LeaderManage.vue",
+      "name": "负责人管理模块",
+      "description": "管理负责人信息（单独页面）",
+      "entry": "/leader",
+      "techStack": ["Vue 3", "WangEditor"],
+      "hasTests": false,
+      "documentation": null
+    },
+    {
+      "path": "src/utils/",
+      "name": "工具模块",
+      "description": "提供 HTTP 客户端、认证管理、编辑器配置",
+      "entry": null,
+      "techStack": ["Axios", "localStorage", "WangEditor"],
+      "hasTests": false,
+      "documentation": "src/utils/CLAUDE.md"
+    },
+    {
+      "path": "src/router/",
+      "name": "路由模块",
+      "description": "路由配置和权限守卫",
+      "entry": null,
+      "techStack": ["Vue Router"],
+      "hasTests": false,
+      "documentation": "src/router/CLAUDE.md"
+    }
+  ],
+  "coverage": {
+    "totalFiles": 20,
+    "scannedFiles": 18,
+    "coveragePercentage": 90,
+    "documentationCoverage": 50
+  },
+  "gaps": [
+    {
+      "module": "NewsManage.vue",
+      "missing": "模块级文档",
+      "priority": "medium"
+    },
+    {
+      "module": "PublicationsManage.vue",
+      "missing": "模块级文档",
+      "priority": "medium"
+    },
+    {
+      "module": "ProjectsManage.vue",
+      "missing": "模块级文档",
+      "priority": "medium"
+    },
+    {
+      "module": "GalleryManage.vue",
+      "missing": "模块级文档",
+      "priority": "medium"
+    },
+    {
+      "module": "RecruitmentManage.vue",
+      "missing": "模块级文档",
+      "priority": "medium"
+    },
+    {
+      "module": "所有模块",
+      "missing": "单元测试",
+      "priority": "high"
+    },
+    {
+      "module": "所有模块",
+      "missing": "E2E 测试",
+      "priority": "medium"
+    },
+    {
+      "module": "项目",
+      "missing": "TypeScript 迁移",
+      "priority": "low"
+    }
+  ],
+  "ignoredPaths": [
+    "node_modules/**",
+    "dist/**",
+    "dist-ssr/**",
+    "*.local",
+    ".vscode/*",
+    ".idea",
+    ".DS_Store"
+  ],
+  "truncated": false,
+  "nextSteps": [
+    "为剩余管理模块创建文档（NewsManage、PublicationsManage 等）",
+    "添加单元测试框架（Vitest）",
+    "配置 ESLint 和 Prettier",
+    "添加 .env.example 环境变量示例文件",
+    "创建 README.md 使用说明"
+  ],
+  "recommendations": [
+    "添加单元测试以提高代码质量",
+    "考虑迁移到 TypeScript 以提高类型安全",
+    "优化图片上传性能（添加压缩、进度条）",
+    "添加操作日志记录功能",
+    "实现内容审核工作流"
+  ]
+}

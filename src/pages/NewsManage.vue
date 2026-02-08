@@ -1,96 +1,140 @@
 <template>
   <div class="news-manage">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>新闻列表</span>
-          <el-button type="primary" @click="openAddDialog">
-            <el-icon><Plus /></el-icon>
-            添加新闻
-          </el-button>
-        </div>
-      </template>
-
-      <!-- 搜索表单 -->
-      <el-form :inline="true" class="search-form">
-        <el-form-item label="分类">
-          <el-select v-model="searchForm.category" placeholder="请选择" clearable>
-            <el-option label="全部" value="" />
-            <el-option label="团队建设" value="团队建设" />
-            <el-option label="学术交流" value="学术交流" />
-            <el-option label="科研成果" value="科研成果" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="年份">
-          <el-select v-model="searchForm.year" placeholder="请选择" clearable>
-            <el-option label="全部" value="" />
-            <el-option label="2024" :value="2024" />
-            <el-option label="2023" :value="2023" />
-            <el-option label="2022" :value="2022" />
-            <el-option label="2021" :value="2021" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" @click="loadNewsList">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <!-- 新闻表格 -->
-      <el-table :data="newsList" border stripe v-loading="loading">
-        <el-table-column type="index" label="#" width="60" />
-        <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="category" label="分类" width="120" />
-        <el-table-column prop="publishDate" label="发布日期" width="120" />
-        <el-table-column prop="isImportant" label="重要" width="80">
-          <template #default="{ row }">
-            <el-tag v-if="row.isImportant" type="danger">是</el-tag>
-            <el-tag v-else type="info">否</el-tag>
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <!-- 新闻列表 -->
+      <el-tab-pane label="新闻列表" name="news">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <span>新闻列表</span>
+              <el-button type="primary" @click="openNewsDialog">
+                <el-icon><Plus /></el-icon>
+                添加新闻
+              </el-button>
+            </div>
           </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 1" type="success">上架</el-tag>
-            <el-tag v-else type="info">下架</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row.id)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
 
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadNewsList"
-        @current-change="loadNewsList"
-        style="margin-top: 20px; justify-content: center"
-      />
-    </el-card>
+          <!-- 搜索表单 -->
+          <el-form :inline="true" class="search-form">
+            <el-form-item label="分类">
+              <el-select v-model="newsSearchForm.category" placeholder="请选择" clearable>
+                <el-option label="全部" value="" />
+                <el-option label="团队建设" value="团队建设" />
+                <el-option label="学术交流" value="学术交流" />
+                <el-option label="科研成果" value="科研成果" />
+              </el-select>
+            </el-form-item>
 
-    <!-- 添加/编辑对话框 -->
+            <el-form-item label="年份">
+              <el-select v-model="newsSearchForm.year" placeholder="请选择" clearable>
+                <el-option label="全部" value="" />
+                <el-option label="2024" :value="2024" />
+                <el-option label="2023" :value="2023" />
+                <el-option label="2022" :value="2022" />
+                <el-option label="2021" :value="2021" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item>
+              <el-button type="primary" @click="loadNewsList">搜索</el-button>
+              <el-button @click="resetNewsSearch">重置</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 新闻表格 -->
+          <el-table :data="newsList" border stripe v-loading="newsLoading">
+            <el-table-column type="index" label="#" width="60" />
+            <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="category" label="分类" width="120" />
+            <el-table-column prop="publishDate" label="发布日期" width="120" />
+            <el-table-column prop="isImportant" label="重要" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.isImportant" type="danger">是</el-tag>
+                <el-tag v-else type="info">否</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.status === 1" type="success">上架</el-tag>
+                <el-tag v-else type="info">下架</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="180" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" @click="openNewsDialog(row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="handleDeleteNews(row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <el-pagination
+            v-model:current-page="newsPagination.page"
+            v-model:page-size="newsPagination.pageSize"
+            :total="newsPagination.total"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="loadNewsList"
+            @current-change="loadNewsList"
+            style="margin-top: 20px; justify-content: center"
+          />
+        </el-card>
+      </el-tab-pane>
+
+      <!-- 年度大事件 -->
+      <el-tab-pane label="年度大事件" name="events">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <span>年度大事件</span>
+              <el-button type="primary" @click="openEventDialog">
+                <el-icon><Plus /></el-icon>
+                添加年度事件
+              </el-button>
+            </div>
+          </template>
+
+          <!-- 年度事件表格 -->
+          <el-table :data="eventsList" border stripe v-loading="eventsLoading">
+            <el-table-column type="index" label="#" width="60" />
+            <el-table-column prop="year" label="年份" width="120" />
+            <el-table-column prop="content" label="内容" min-width="300" show-overflow-tooltip>
+              <template #default="{ row }">
+                <div v-html="row.content" class="content-preview"></div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.status === 1" type="success">上架</el-tag>
+                <el-tag v-else type="info">下架</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdAt" label="创建时间" width="180" />
+            <el-table-column label="操作" width="180" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" @click="openEventDialog(row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="handleDeleteEvent(row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-tab-pane>
+    </el-tabs>
+
+    <!-- 新闻添加/编辑对话框 -->
     <el-dialog
-      v-model="dialogVisible"
-      :title="dialogTitle"
+      v-model="newsDialogVisible"
+      :title="newsDialogTitle"
       width="800px"
-      @close="resetForm"
+      @close="resetNewsForm"
     >
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+      <el-form :model="newsForm" :rules="newsRules" ref="newsFormRef" label-width="100px">
         <el-form-item label="标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入新闻标题" />
+          <el-input v-model="newsForm.title" placeholder="请输入新闻标题" />
         </el-form-item>
 
         <el-form-item label="分类" prop="category">
-          <el-select v-model="form.category" placeholder="请选择分类">
+          <el-select v-model="newsForm.category" placeholder="请选择分类">
             <el-option label="团队建设" value="团队建设" />
             <el-option label="学术交流" value="学术交流" />
             <el-option label="科研成果" value="科研成果" />
@@ -100,7 +144,7 @@
 
         <el-form-item label="发布日期" prop="publishDate">
           <el-date-picker
-            v-model="form.publishDate"
+            v-model="newsForm.publishDate"
             type="date"
             placeholder="选择日期"
             value-format="YYYY-MM-DD"
@@ -111,24 +155,24 @@
           <div class="editor-container">
             <Toolbar
               style="border-bottom: 1px solid #ccc"
-              :editor="editorRef"
+              :editor="newsEditorRef"
               :defaultConfig="toolbarConfig"
             />
             <Editor
-              v-model="editorContent"
+              v-model="newsEditorContent"
               :defaultConfig="editorConfig"
-              @onCreated="handleEditorCreated"
-              @onChange="handleEditorChange"
+              @onCreated="handleNewsEditorCreated"
+              @onChange="handleNewsEditorChange"
             />
           </div>
         </el-form-item>
 
         <el-form-item label="重要新闻">
-          <el-switch v-model="form.isImportant" />
+          <el-switch v-model="newsForm.isImportant" />
         </el-form-item>
 
         <el-form-item label="状态">
-          <el-radio-group v-model="form.status">
+          <el-radio-group v-model="newsForm.status">
             <el-radio :value="1">上架</el-radio>
             <el-radio :value="0">下架</el-radio>
           </el-radio-group>
@@ -136,8 +180,56 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button @click="newsDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleNewsSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 年度大事件添加/编辑对话框 -->
+    <el-dialog
+      v-model="eventDialogVisible"
+      :title="eventDialogTitle"
+      width="800px"
+      @close="resetEventForm"
+    >
+      <el-form :model="eventForm" :rules="eventRules" ref="eventFormRef" label-width="100px">
+        <el-form-item label="年份" prop="year">
+          <el-date-picker
+            v-model="eventYear"
+            type="year"
+            placeholder="选择年份"
+            value-format="YYYY"
+            @change="handleYearChange"
+          />
+        </el-form-item>
+
+        <el-form-item label="内容" prop="content">
+          <div class="editor-container">
+            <Toolbar
+              style="border-bottom: 1px solid #ccc"
+              :editor="eventEditorRef"
+              :defaultConfig="toolbarConfig"
+            />
+            <Editor
+              v-model="eventEditorContent"
+              :defaultConfig="editorConfig"
+              @onCreated="handleEventEditorCreated"
+              @onChange="handleEventEditorChange"
+            />
+          </div>
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-radio-group v-model="eventForm.status">
+            <el-radio :value="1">上架</el-radio>
+            <el-radio :value="0">下架</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="eventDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleEventSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -154,30 +246,37 @@ import '@wangeditor/editor/dist/css/style.css'
 // 引入公共编辑器配置
 import { toolbarConfig, editorConfig, imageManager } from '../utils/editorConfig'
 
-// 搜索表单
-const searchForm = reactive({
+// ========== Tab 切换 ==========
+const activeTab = ref('news')
+
+const handleTabChange = (tabName) => {
+  if (tabName === 'news') {
+    loadNewsList()
+  } else if (tabName === 'events') {
+    loadEventsList()
+  }
+}
+
+// ========== 新闻管理 ==========
+const newsSearchForm = reactive({
   category: '',
   year: null
 })
 
-// 分页
-const pagination = reactive({
+const newsPagination = reactive({
   page: 1,
   pageSize: 10,
   total: 0
 })
 
-// 新闻列表
 const newsList = ref([])
-const loading = ref(false)
+const newsLoading = ref(false)
 
-// 对话框
-const dialogVisible = ref(false)
-const dialogTitle = computed(() => form.id ? '编辑新闻' : '添加新闻')
-const formRef = ref(null)
+const newsDialogVisible = ref(false)
+const newsDialogTitle = computed(() => newsForm.id ? '编辑新闻' : '添加新闻')
+const newsFormRef = ref(null)
 
-// 表单数据
-const form = reactive({
+const newsForm = reactive({
   id: null,
   title: '',
   content: '',
@@ -188,81 +287,23 @@ const form = reactive({
 })
 
 // WangEditor 配置
-const editorRef = ref(null)
-const editorContent = ref('')
-const editorImagesMap = ref({})
+const newsEditorRef = ref(null)
+const newsEditorContent = ref('')
 
-// 监听编辑器内容变化
-const handleEditorChange = (editor) => {
-  editorContent.value = editor.getHtml()
-  // 将内容同步到form中
-  form.content = editorContent.value
+const handleNewsEditorChange = (editor) => {
+  newsEditorContent.value = editor.getHtml()
+  newsForm.content = newsEditorContent.value
 }
 
-// 检查编辑器中的图片删除
-const checkImagesDeletion = () => {
-  if (!editorRef.value) return
-  
-  const html = editorRef.value.getHtml()
-  // 从HTML中提取所有图片URL
-  const newImages = []
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const imgElements = doc.querySelectorAll('img')
-  imgElements.forEach(img => {
-    const src = img.getAttribute('src')
-    if (src && src.startsWith('/uploads/images/')) {
-      newImages.push(src)
-    }
-  })
-  
-  // 检测被删除的图片
-  const deletedImages = Object.values(editorImagesMap.value).filter(img => !newImages.includes(img))
-  
-  // 如果有图片被删除，调用后端API删除本地文件
-  if (deletedImages.length > 0) {
-    deletedImages.forEach(imgUrl => {
-      // 调用后端API删除本地文件
-      request.delete(`/upload/file?url=${encodeURIComponent(imgUrl)}`)
-        .then(response => {
-          if (response.code === 200) {
-            console.log('图片删除成功:', imgUrl)
-            // 从图片映射中移除已删除的图片
-            for (const key in editorImagesMap.value) {
-              if (editorImagesMap.value[key] === imgUrl) {
-                delete editorImagesMap.value[key]
-                break
-              }
-            }
-          } else {
-            console.error('图片删除失败:', imgUrl, response.message)
-          }
-        })
-        .catch(error => {
-          console.error('删除图片时发生错误:', imgUrl, error)
-        })
-    })
-  }
-  
-  // 更新当前图片列表
-  // 为每个图片生成一个唯一key，用于跟踪图片变化
-  const newImagesMap = {}
-  newImages.forEach((img, index) => {
-    newImagesMap[`img_${index}_${Date.now()}`] = img
-  })
-  editorImagesMap.value = newImagesMap
-}
-
-// 监听form.content变化，更新编辑器内容
 watch(
-  () => form.content,
+  () => newsForm.content,
   (newVal) => {
-    if (newVal !== editorContent.value && editorRef.value) {
-      editorContent.value = newVal
-      // 延迟更新，确保编辑器实例已创建
+    // 只有在编辑器已初始化，且内容确实不同时才更新
+    if (newsEditorRef.value && newVal !== newsEditorContent.value) {
+      newsEditorContent.value = newVal
       nextTick(() => {
-        const editor = editorRef.value
-        if (editor) {
+        const editor = newsEditorRef.value
+        if (editor && editor.getHtml() !== newVal) {
           editor.setHtml(newVal || '')
         }
       })
@@ -270,96 +311,86 @@ watch(
   }
 )
 
-// 表单验证规则
-const rules = {
+const newsRules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   category: [{ required: true, message: '请选择分类', trigger: 'change' }],
   content: [{ required: true, message: '请输入内容', trigger: 'blur' }],
   publishDate: [{ required: true, message: '请选择日期', trigger: 'change' }]
 }
 
-// 加载新闻列表
 const loadNewsList = async () => {
   try {
-    loading.value = true
+    newsLoading.value = true
     const res = await request.get('/news/list', {
       params: {
-        page: pagination.page,
-        pageSize: pagination.pageSize
+        page: newsPagination.page,
+        pageSize: newsPagination.pageSize,
+        category: newsSearchForm.category || undefined,
+        year: newsSearchForm.year || undefined
       }
     })
 
-    // 如果是分页数据
     if (res.data.records) {
       newsList.value = res.data.records
-      pagination.total = res.data.total
+      newsPagination.total = res.data.total
     } else {
       newsList.value = res.data || []
-      pagination.total = newsList.value.length
+      newsPagination.total = newsList.value.length
     }
   } catch (error) {
     console.error('加载新闻列表失败:', error)
   } finally {
-    loading.value = false
+    newsLoading.value = false
   }
 }
 
-// 打开添加对话框
-const openAddDialog = () => {
-  dialogVisible.value = true
+const openNewsDialog = (row = null) => {
+  if (row) {
+    Object.assign(newsForm, row)
+    // 先设置编辑器内容，确保对话框打开时有内容
+    newsEditorContent.value = row.content || ''
+  } else {
+    // 添加新闻时，清空内容
+    newsEditorContent.value = ''
+  }
+  newsDialogVisible.value = true
 }
 
-// 打开编辑对话框
-const openEditDialog = (row) => {
-  Object.assign(form, row)
-  dialogVisible.value = true
-  // 等待对话框打开和编辑器初始化完成后，手动设置编辑器内容
+const handleNewsEditorCreated = (editor) => {
+  newsEditorRef.value = editor
+  // 编辑器创建完成后，设置内容
   nextTick(() => {
-    // 直接设置editorContent，触发编辑器更新
-    editorContent.value = row.content
-    // 延迟一下，确保编辑器实例已经创建
-    nextTick(() => {
-      if (editorRef.value) {
-        editorRef.value.setHtml(row.content || '')
-      }
-    })
+    if (newsEditorContent.value) {
+      editor.setHtml(newsEditorContent.value)
+    }
+    imageManager.checkImagesDeletion(editor)
   })
 }
 
-// 编辑器创建成功回调
-const handleEditorCreated = (editor) => {
-  editorRef.value = editor
-  // 初始化图片列表
-  checkImagesDeletion()
-}
-
-// 提交表单
-const handleSubmit = async () => {
-  if (!formRef.value) return
+const handleNewsSubmit = async () => {
+  if (!newsFormRef.value) return
 
   try {
-    await formRef.value.validate()
-    
-    // 检查编辑器中的图片删除
-    imageManager.checkImagesDeletion(editorRef.value)
+    await newsFormRef.value.validate()
 
-    if (form.id) {
-      await request.put(`/news/${form.id}`, form)
+    imageManager.checkImagesDeletion(newsEditorRef.value)
+
+    if (newsForm.id) {
+      await request.put(`/news/${newsForm.id}`, newsForm)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/news', form)
+      await request.post('/news', newsForm)
       ElMessage.success('添加成功')
     }
 
-    dialogVisible.value = false
+    newsDialogVisible.value = false
     loadNewsList()
   } catch (error) {
     console.error('提交失败:', error)
   }
 }
 
-// 删除新闻
-const handleDelete = async (id) => {
+const handleDeleteNews = async (id) => {
   try {
     await ElMessageBox.confirm('确定要删除这条新闻吗？', '提示', {
       confirmButtonText: '确定',
@@ -377,20 +408,18 @@ const handleDelete = async (id) => {
   }
 }
 
-// 重置搜索
-const resetSearch = () => {
-  searchForm.category = ''
-  searchForm.year = null
-  pagination.page = 1
+const resetNewsSearch = () => {
+  newsSearchForm.category = ''
+  newsSearchForm.year = null
+  newsPagination.page = 1
   loadNewsList()
 }
 
-// 重置表单
-const resetForm = () => {
-  if (formRef.value) {
-    formRef.value.resetFields()
+const resetNewsForm = () => {
+  if (newsFormRef.value) {
+    newsFormRef.value.resetFields()
   }
-  Object.assign(form, {
+  Object.assign(newsForm, {
     id: null,
     title: '',
     content: '',
@@ -399,6 +428,150 @@ const resetForm = () => {
     publishDate: '',
     status: 1
   })
+  newsEditorContent.value = ''
+}
+
+// ========== 年度大事件管理 ==========
+const eventsList = ref([])
+const eventsLoading = ref(false)
+
+const eventDialogVisible = ref(false)
+const eventDialogTitle = computed(() => eventForm.id ? '编辑年度事件' : '添加年度事件')
+const eventFormRef = ref(null)
+
+const eventForm = reactive({
+  id: null,
+  content: '',
+  year: null,
+  status: 1
+})
+
+const eventYear = ref('')
+
+// WangEditor 配置
+const eventEditorRef = ref(null)
+const eventEditorContent = ref('')
+
+const handleEventEditorChange = (editor) => {
+  eventEditorContent.value = editor.getHtml()
+  eventForm.content = eventEditorContent.value
+}
+
+const handleYearChange = (value) => {
+  eventForm.year = parseInt(value)
+}
+
+watch(
+  () => eventForm.content,
+  (newVal) => {
+    // 只有在编辑器已初始化，且内容确实不同时才更新
+    if (eventEditorRef.value && newVal !== eventEditorContent.value) {
+      eventEditorContent.value = newVal
+      nextTick(() => {
+        const editor = eventEditorRef.value
+        if (editor && editor.getHtml() !== newVal) {
+          editor.setHtml(newVal || '')
+        }
+      })
+    }
+  }
+)
+
+const eventRules = {
+  year: [{ required: true, message: '请选择年份', trigger: 'change' }],
+  content: [{ required: true, message: '请输入内容', trigger: 'blur' }]
+}
+
+const loadEventsList = async () => {
+  try {
+    eventsLoading.value = true
+    const res = await request.get('/annual-events/admin/list')
+    eventsList.value = res.data || []
+  } catch (error) {
+    console.error('加载年度事件列表失败:', error)
+  } finally {
+    eventsLoading.value = false
+  }
+}
+
+const openEventDialog = (row = null) => {
+  if (row) {
+    Object.assign(eventForm, row)
+    eventYear.value = row.year ? row.year.toString() : ''
+    // 先设置编辑器内容，确保对话框打开时有内容
+    eventEditorContent.value = row.content || ''
+  } else {
+    // 添加新事件时，清空表单
+    resetEventForm()
+    eventEditorContent.value = ''
+  }
+  eventDialogVisible.value = true
+}
+
+const handleEventEditorCreated = (editor) => {
+  eventEditorRef.value = editor
+  // 编辑器创建完成后，设置内容
+  nextTick(() => {
+    if (eventEditorContent.value) {
+      editor.setHtml(eventEditorContent.value)
+    }
+    imageManager.checkImagesDeletion(editor)
+  })
+}
+
+const handleEventSubmit = async () => {
+  if (!eventFormRef.value) return
+
+  try {
+    await eventFormRef.value.validate()
+
+    imageManager.checkImagesDeletion(eventEditorRef.value)
+
+    if (eventForm.id) {
+      await request.put(`/annual-events/${eventForm.id}`, eventForm)
+      ElMessage.success('更新成功')
+    } else {
+      await request.post('/annual-events', eventForm)
+      ElMessage.success('添加成功')
+    }
+
+    eventDialogVisible.value = false
+    loadEventsList()
+  } catch (error) {
+    console.error('提交失败:', error)
+  }
+}
+
+const handleDeleteEvent = async (id) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条年度事件吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    await request.delete(`/annual-events/${id}`)
+    ElMessage.success('删除成功')
+    loadEventsList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+    }
+  }
+}
+
+const resetEventForm = () => {
+  if (eventFormRef.value) {
+    eventFormRef.value.resetFields()
+  }
+  Object.assign(eventForm, {
+    id: null,
+    content: '',
+    year: null,
+    status: 1
+  })
+  eventYear.value = ''
+  eventEditorContent.value = ''
 }
 
 onMounted(() => {
@@ -419,6 +592,15 @@ onMounted(() => {
 
 .search-form {
   margin-bottom: 20px;
+}
+
+.content-preview {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* 编辑器容器样式 */
