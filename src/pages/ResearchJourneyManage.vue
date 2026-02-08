@@ -125,11 +125,13 @@
         <el-form-item label="内容" prop="content">
           <div class="editor-container">
             <Toolbar
+              v-if="dialogVisible && editorReady"
               style="border-bottom: 1px solid #ccc"
               :editor="editorRef"
               :defaultConfig="toolbarConfig"
             />
             <Editor
+              v-if="dialogVisible && editorReady"
               v-model="editorContent"
               :defaultConfig="editorConfig"
               @onCreated="handleEditorCreated"
@@ -209,6 +211,7 @@ const rules = {
 // WangEditor 配置
 const editorRef = ref(null)
 const editorContent = ref('')
+const editorReady = ref(false)  // 控制编辑器渲染时机，避免切换内容时状态不一致
 
 // 监听编辑器内容变化
 const handleEditorChange = (editor) => {
@@ -250,10 +253,15 @@ const resetSearch = () => {
 const openAddDialog = () => {
   resetForm()
   dialogVisible.value = true
+  editorReady.value = false  // 先销毁编辑器
+  
   nextTick(() => {
-    if (editorRef.value) {
-      editorRef.value.setHtml('')
-    }
+    editorReady.value = true  // 再重建编辑器
+    nextTick(() => {
+      if (editorRef.value) {
+        editorRef.value.setHtml('')
+      }
+    })
   })
 }
 
@@ -262,10 +270,15 @@ const openEditDialog = (row) => {
   Object.assign(form, row)
   editorContent.value = row.content || ''
   dialogVisible.value = true
+  editorReady.value = false  // 先销毁编辑器
+  
   nextTick(() => {
-    if (editorRef.value) {
-      editorRef.value.setHtml(editorContent.value)
-    }
+    editorReady.value = true  // 再重建编辑器
+    nextTick(() => {
+      if (editorRef.value) {
+        editorRef.value.setHtml(editorContent.value)
+      }
+    })
   })
 }
 
@@ -389,6 +402,7 @@ const resetForm = () => {
     sortOrder: 0
   })
   editorContent.value = ''
+  editorReady.value = false  // 重置编辑器状态
   selectedCoverFile.value = null
   coverPreview.value = ''
 }
